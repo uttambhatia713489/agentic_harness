@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter xmlns="http://findbugs.sourceforge.net/filter/3.0.0"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:schemaLocation="http://findbugs.sourceforge.net/filter/3.0.0 http://findbugs.sourceforge.net/filter/3.0.0/filter.xsd">
+
+  <!-- Exclude main entry point -->
+  <Match>
+    <Class name="com.storeops.StoreOpsApplication"/>
+  </Match>
+
+  <!-- Exclude test classes -->
+  <Match>
+    <Package name="~com\.storeops\..*\..*Test"/>
+  </Match>
+
+  <!-- Allow unused private methods in DTOs and models -->
+  <Match>
+    <Class name="~com\.storeops\..*\.(dto|model)\..*"/>
+    <Bug code="UPM"/>
+  </Match>
+
+</FindBugsFilter>
