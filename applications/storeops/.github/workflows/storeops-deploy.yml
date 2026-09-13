@@ -1,0 +1,135 @@
+name: StoreOps CI/CD - Build & Deploy to Azure App Service
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'applications/storeops/**'
+      - '.github/workflows/storeops-deploy.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'applications/storeops/**'
+  workflow_dispatch: {}   # allows manual "Run workflow" trigger from the Actions tab
+
+env:
+  AZURE_WEBAPP_NAME: storeops-app          # must match the Web App name created in Step 1
+  WORKING_DIR: applications/storeops       # subfolder in the monorepo
+  JAVA_VERSION: '21'
+
+permissions:
+  id-token: write     # required for OIDC login to Azure
+  contents: read
+
+jobs:
+  # -------------------------------------------------------------------------
+  # Job 1: Build, test, and package the Maven project
+  # -------------------------------------------------------------------------
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name: storeops-jar
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'maven'
+          cache-dependency-path: ${{ env.WORKING_DIR }}/pom.xml
+
+      - name: Build and run tests
+        working-directory: ${{ env.WORKING_DIR }}
+        run: mvn -B clean verify
+
+      - name: Package application (skip re-running tests)
+        working-directory: ${{ env.WORKING_DIR }}
+        run: mvn -B package -DskipTests
+
+      - name: Locate built JAR
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          JAR_PATH=$(find target -maxdepth 1 -name "*.jar" ! -name "*-sources.jar" | head -n 1)
+          echo "Found artifact: $JAR_PATH"
+          cp "$JAR_PATH" target/app.jar
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: storeops-jar
+          path: ${{ env.WORKING_DIR }}/target/app.jar
+          retention-days: 5
+
+  # -------------------------------------------------------------------------
+  # Job 2: Deploy to Azure App Service (staging slot first)
+  # -------------------------------------------------------------------------
+  deploy-staging:
+    name: Deploy to Staging Slot
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://${{ env.AZURE_WEBAPP_NAME }}-staging.azurewebsites.net
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: storeops-jar
+          path: ./deploy
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy JAR to staging slot
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          slot-name: staging
+          package: ./deploy/app.jar
+
+      - name: Smoke test staging
+        run: |
+          sleep 20
+          curl -sf https://${{ env.AZURE_WEBAPP_NAME }}-staging.azurewebsites.net/actuator/health || \
+          curl -sf https://${{ env.AZURE_WEBAPP_NAME }}-staging.azurewebsites.net/
+
+  # -------------------------------------------------------------------------
+  # Job 3: Swap staging into production after validation
+  # -------------------------------------------------------------------------
+  swap-to-production:
+    name: Swap Staging -> Production
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net
+    steps:
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Swap slots (zero-downtime deploy)
+        run: |
+          az webapp deployment slot swap \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group storeops-rg \
+            --slot staging \
+            --target-slot production
+
+      - name: Verify production
+        run: |
+          sleep 15
+          curl -sf https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/actuator/health || \
+          curl -sf https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/
