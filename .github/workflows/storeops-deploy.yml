@@ -89,29 +89,28 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: ./deploy/app.jar
 
-      - name: Smoke test (with retry and diagnostics)
+      - name: Smoke test (Actuator health check, with retry)
         run: |
-          URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/api/activities"
+          HEALTH_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/actuator/health"
           MAX_ATTEMPTS=10
           SLEEP_SECONDS=15
 
           for i in $(seq 1 $MAX_ATTEMPTS); do
-            echo "Attempt $i/$MAX_ATTEMPTS: checking $URL ..."
-            HTTP_CODE=$(curl -s -o /tmp/response.txt -w "%{http_code}" "$URL/" || echo "000")
+            echo "Attempt $i/$MAX_ATTEMPTS: checking $HEALTH_URL ..."
+            HTTP_CODE=$(curl -s -o /tmp/response.txt -w "%{http_code}" "$HEALTH_URL" || echo "000")
+            BODY=$(cat /tmp/response.txt 2>/dev/null || echo "")
             echo "HTTP status: $HTTP_CODE"
+            echo "Response body: $BODY"
 
-            if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 400 ]; then
-              echo "App responded successfully with status $HTTP_CODE"
+            if [ "$HTTP_CODE" = "200" ] && echo "$BODY" | grep -q '"status":"UP"'; then
+              echo "App is healthy (status 200, UP)."
               exit 0
             fi
 
-            echo "Response body (first 500 chars):"
-            head -c 500 /tmp/response.txt || true
-            echo ""
-            echo "Not ready yet, waiting ${SLEEP_SECONDS}s before retry..."
+            echo "Not healthy yet, waiting ${SLEEP_SECONDS}s before retry..."
             sleep $SLEEP_SECONDS
           done
 
-          echo "App did not become healthy after $MAX_ATTEMPTS attempts."
+          echo "App did not report healthy after $MAX_ATTEMPTS attempts."
           echo "Check 'az webapp log tail' for startup errors."
           exit 1
