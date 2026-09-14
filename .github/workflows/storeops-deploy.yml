@@ -91,7 +91,7 @@ jobs:
 
       - name: Smoke test (with retry and diagnostics)
         run: |
-          URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
+          URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/api/activities"
           MAX_ATTEMPTS=10
           SLEEP_SECONDS=15
 
