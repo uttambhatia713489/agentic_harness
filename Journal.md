@@ -26,6 +26,11 @@
 
 ---
 
+## Process Flow Diagram
+![Process_Flow](./docs/diagrams/ProcessFlow_Diagram.png "Process Flow diagram")
+
+---
+
 ## SLA Breach Alerting — Architecture Validated Through Execution
 
 The completed SLA Breach Alerting run exercised the intended architecture across all Planner-derived sprints:
