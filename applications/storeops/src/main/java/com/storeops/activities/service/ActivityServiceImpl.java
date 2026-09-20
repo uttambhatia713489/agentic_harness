@@ -43,6 +43,7 @@ public class ActivityServiceImpl implements ActivityService {
         task.setPriority(request.priority());
         task.setCategory(request.category());
         task.setAssigneeId(request.assigneeId());
+        task.setDueAt(request.dueAt());
         task.setCreatedAt(Instant.now());
         task.setUpdatedAt(Instant.now());
         return toDto(activityRepository.save(task));
@@ -71,6 +72,9 @@ public class ActivityServiceImpl implements ActivityService {
         if (request.assigneeId() != null) {
             task.setAssigneeId(request.assigneeId());
         }
+        if (request.dueAt() != null) {
+            task.setDueAt(request.dueAt());
+        }
         task.setUpdatedAt(Instant.now());
         final Task saved = activityRepository.save(task);
         if (saved.getStatus() == TaskStatus.BLOCKED) {
@@ -96,7 +100,8 @@ public class ActivityServiceImpl implements ActivityService {
                 task.getPriority(),
                 task.getCategory(),
                 task.getAssigneeId(),
-                task.getOwnerId()
+                task.getOwnerId(),
+                task.getDueAt()
         );
     }
 }

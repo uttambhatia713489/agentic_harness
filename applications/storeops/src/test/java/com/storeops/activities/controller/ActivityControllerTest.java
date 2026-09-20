@@ -44,7 +44,7 @@ class ActivityControllerTest {
     @Test
     void testListActivities() throws Exception {
         final ActivityDto activity = new ActivityDto("id-1", "prog-1", "Fix shelf", "Restocking task",
-                TaskStatus.TODO, TaskPriority.HIGH, TaskCategory.RESTOCKING, "user-1", "owner-1");
+                TaskStatus.TODO, TaskPriority.HIGH, TaskCategory.RESTOCKING, "user-1", "owner-1", null);
         when(activityService.list(null, null)).thenReturn(Arrays.asList(activity));
 
         mockMvc.perform(get("/api/activities"))
@@ -56,7 +56,7 @@ class ActivityControllerTest {
     @Test
     void testListActivitiesWithFilters() throws Exception {
         final ActivityDto activity = new ActivityDto("id-1", "prog-1", "Fix shelf", "Restocking task",
-                TaskStatus.IN_PROGRESS, TaskPriority.HIGH, TaskCategory.RESTOCKING, "user-1", "owner-1");
+                TaskStatus.IN_PROGRESS, TaskPriority.HIGH, TaskCategory.RESTOCKING, "user-1", "owner-1", null);
         when(activityService.list("prog-1", TaskStatus.IN_PROGRESS)).thenReturn(Arrays.asList(activity));
 
         mockMvc.perform(get("/api/activities")
@@ -69,9 +69,9 @@ class ActivityControllerTest {
     @Test
     void testCreateActivity() throws Exception {
         final CreateActivityRequest request = new CreateActivityRequest("prog-1", "New task", "Description",
-                TaskPriority.MEDIUM, TaskCategory.AUDIT, "user-2");
+                TaskPriority.MEDIUM, TaskCategory.AUDIT, "user-2", null);
         final ActivityDto created = new ActivityDto("id-2", "prog-1", "New task", "Description",
-                TaskStatus.TODO, TaskPriority.MEDIUM, TaskCategory.AUDIT, "user-2", null);
+                TaskStatus.TODO, TaskPriority.MEDIUM, TaskCategory.AUDIT, "user-2", null, null);
         when(activityService.create(any())).thenReturn(created);
 
         mockMvc.perform(post("/api/activities")
@@ -85,7 +85,7 @@ class ActivityControllerTest {
     @Test
     void testGetActivityById() throws Exception {
         final ActivityDto activity = new ActivityDto("id-1", "prog-1", "Fix shelf", "Restocking task",
-                TaskStatus.DONE, TaskPriority.HIGH, TaskCategory.RESTOCKING, "user-1", "owner-1");
+                TaskStatus.DONE, TaskPriority.HIGH, TaskCategory.RESTOCKING, "user-1", "owner-1", null);
         when(activityService.getById("id-1")).thenReturn(activity);
 
         mockMvc.perform(get("/api/activities/id-1"))
@@ -96,9 +96,9 @@ class ActivityControllerTest {
 
     @Test
     void testUpdateActivity() throws Exception {
-        final UpdateActivityRequest request = new UpdateActivityRequest(TaskStatus.IN_PROGRESS, null, null, null);
+        final UpdateActivityRequest request = new UpdateActivityRequest(TaskStatus.IN_PROGRESS, null, null, null, null);
         final ActivityDto updated = new ActivityDto("id-1", "prog-1", "Fix shelf", "Restocking task",
-                TaskStatus.IN_PROGRESS, TaskPriority.HIGH, TaskCategory.RESTOCKING, "user-1", "owner-1");
+                TaskStatus.IN_PROGRESS, TaskPriority.HIGH, TaskCategory.RESTOCKING, "user-1", "owner-1", null);
         when(activityService.update(anyString(), any())).thenReturn(updated);
 
         mockMvc.perform(patch("/api/activities/id-1")

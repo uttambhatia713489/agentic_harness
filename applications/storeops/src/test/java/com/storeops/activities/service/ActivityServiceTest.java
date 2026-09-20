@@ -39,7 +39,7 @@ class ActivityServiceTest {
     @Test
     void testCreateActivityReturnsNewTaskWithTodoStatus() {
         final CreateActivityRequest request = new CreateActivityRequest("prog-1", "New Task", "Description",
-                TaskPriority.HIGH, TaskCategory.RESTOCKING, "user-1");
+                TaskPriority.HIGH, TaskCategory.RESTOCKING, "user-1", null);
         final Task task = new Task();
         task.setId("id-1");
         when(activityRepository.save(any())).thenReturn(task);

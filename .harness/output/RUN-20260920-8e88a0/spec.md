@@ -13,9 +13,16 @@ Application:       storeops
 Technology:        java-spring
 Governance Policy: default-governance
 Author Agent:      Planner
-Status:            AWAITING_APPROVAL
+Status:            PARTIALLY APPROVED — SPRINT-1 approved 2026-09-20;
+                    SPRINT-2 and SPRINT-3 remain AWAITING_APPROVAL.
 Baseline:          v2.0
 ```
+
+**Approval Record (SPRINT-1):** Approved by uttambhatia@outlook.com (session
+user) on 2026-09-20 via approval command `APPROVED`, scoped explicitly to
+Sprint 1 only (`sprint-SPRINT-1-contract.md`). This specification (`spec.md`)
+itself, and Sprint 2/Sprint 3 contracts, are frozen as planned but not yet
+approved; no material change has been made to them as part of this approval.
 
 ---
 

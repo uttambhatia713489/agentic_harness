@@ -4,3 +4,7 @@ server:
 spring:
   application:
     name: storeops
+
+storeops:
+  sla:
+    detection-fixed-rate-ms: 60000

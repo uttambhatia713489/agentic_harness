@@ -13,6 +13,7 @@ public class Task {
     private TaskCategory category;
     private String assigneeId;
     private String ownerId;
+    private Instant dueAt;
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -86,6 +87,14 @@ public class Task {
 
     public void setOwnerId(final String ownerId) {
         this.ownerId = ownerId;
+    }
+
+    public Instant getDueAt() {
+        return dueAt;
+    }
+
+    public void setDueAt(final Instant dueAt) {
+        this.dueAt = dueAt;
     }
 
     public Instant getCreatedAt() {

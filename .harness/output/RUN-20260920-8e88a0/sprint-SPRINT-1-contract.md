@@ -2,9 +2,27 @@
 
 Runtime instance of: `.harness/templates/sprint-contract.template.md`
 
-Status: PENDING APPROVAL (not yet an approved contract). Contains blocking
-open questions (OQ-1, OQ-2) inherited from `spec.md` that must be resolved as
-part of approving this contract.
+Status: APPROVED (Sprint 1 only). Approval resolves blocking Open Questions
+OQ-1, OQ-2, and non-blocking OQ-6 exactly as stated in this contract's
+Assumptions section (below), scoped to Sprint 1 only. Sprints 2 and 3 remain
+AWAITING_APPROVAL and are not authorized by this approval.
+
+---
+
+## Approval Record
+
+```text
+Approval Command:   APPROVED
+Approved Scope:     Sprint 1 (SPRINT-1) only — scope, acceptance criteria,
+                     architecture constraints, required tests, dependencies,
+                     assumptions, and completion conditions of this contract
+                     as written.
+Not Approved:       SPRINT-2, SPRINT-3, or any other module, endpoint, event,
+                     domain model, infrastructure, refactoring, or contract
+                     change beyond this document.
+Approved By:        uttambhatia@outlook.com (session user)
+Approved At:        2026-09-20
+```
 
 ---
 
@@ -19,8 +37,8 @@ Technology:        java-spring
 Governance Policy: default-governance
 Feature Prompt:    PROMPT.md
 Specification:     .harness/output/RUN-20260920-8e88a0/spec.md
-Approved By:       <pending>
-Approved At:       <pending>
+Approved By:       uttambhatia@outlook.com (session user)
+Approved At:        2026-09-20
 Baseline:          v2.0
 ```
 

@@ -3,6 +3,7 @@ package com.storeops.activities.dto;
 import com.storeops.activities.model.TaskCategory;
 import com.storeops.activities.model.TaskPriority;
 import jakarta.validation.constraints.NotBlank;
+import java.time.Instant;
 
 public record CreateActivityRequest(
         @NotBlank String programmeId,
@@ -10,6 +11,7 @@ public record CreateActivityRequest(
         String description,
         TaskPriority priority,
         TaskCategory category,
-        String assigneeId
+        String assigneeId,
+        Instant dueAt
 ) {
 }
