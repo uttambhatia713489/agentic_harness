@@ -5,7 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'applications/storeops/**'
-      - '.github/workflows/storeops-deploy-publishprofile.yml'
+      - '.github/workflows/storeops-deploy.yml'
   pull_request:
     branches: [ main ]
     paths:
@@ -89,8 +89,28 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: ./deploy/app.jar
 
-      - name: Smoke test
+      - name: Smoke test (Actuator health check, with retry)
         run: |
-          sleep 20
-          curl -sf https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/actuator/health || \
-          curl -sf https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/
+          HEALTH_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/actuator/health"
+          MAX_ATTEMPTS=10
+          SLEEP_SECONDS=15
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            echo "Attempt $i/$MAX_ATTEMPTS: checking $HEALTH_URL ..."
+            HTTP_CODE=$(curl -s -o /tmp/response.txt -w "%{http_code}" "$HEALTH_URL" || echo "000")
+            BODY=$(cat /tmp/response.txt 2>/dev/null || echo "")
+            echo "HTTP status: $HTTP_CODE"
+            echo "Response body: $BODY"
+
+            if [ "$HTTP_CODE" = "200" ] && echo "$BODY" | grep -q '"status":"UP"'; then
+              echo "App is healthy (status 200, UP)."
+              exit 0
+            fi
+
+            echo "Not healthy yet, waiting ${SLEEP_SECONDS}s before retry..."
+            sleep $SLEEP_SECONDS
+          done
+
+          echo "App did not report healthy after $MAX_ATTEMPTS attempts."
+          echo "Check 'az webapp log tail' for startup errors."
+          exit 1
