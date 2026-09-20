@@ -33,6 +33,13 @@ public class ProgrammeServiceImpl implements ProgrammeService {
     }
 
     @Override
+    public ProgrammeDto getById(final String id) {
+        return programmeRepository.findById(id)
+                .map(this::toDto)
+                .orElseThrow(() -> new NotFoundError("Programme not found: " + id));
+    }
+
+    @Override
     public ProgrammeDto create(final CreateProgrammeRequest request) {
         final Project project = new Project();
         project.setId(UUID.randomUUID().toString());

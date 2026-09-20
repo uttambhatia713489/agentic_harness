@@ -1,5 +1,6 @@
 package com.storeops.alerts.repository;
 
+import com.storeops.alerts.model.AlertType;
 import com.storeops.alerts.model.Notification;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,21 @@ public class InMemoryAlertRepository implements AlertRepository {
     @Override
     public Optional<Notification> findById(final String id) {
         return Optional.ofNullable(store.get(id));
+    }
+
+    @Override
+    public Optional<Notification> findByReferenceIdAndType(final String referenceId, final AlertType type) {
+        return store.values().stream()
+                .filter(notification -> referenceId != null && referenceId.equals(notification.getReferenceId()))
+                .filter(notification -> type == notification.getType())
+                .findFirst();
+    }
+
+    @Override
+    public List<Notification> findAllByType(final AlertType type) {
+        return store.values().stream()
+                .filter(notification -> type == notification.getType())
+                .toList();
     }
 
     @Override

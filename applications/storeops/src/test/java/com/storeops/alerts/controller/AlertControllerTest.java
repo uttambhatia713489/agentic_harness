@@ -29,7 +29,7 @@ class AlertControllerTest {
     @Test
     void testListAlertsForUser() throws Exception {
         final NotificationDto alert = new NotificationDto("notif-1", "user-1", AlertType.INVENTORY,
-                NotificationChannel.IN_APP, NotificationStatus.PENDING, "Inventory low on aisle 5");
+                NotificationChannel.IN_APP, NotificationStatus.PENDING, "Inventory low on aisle 5", null);
         when(alertService.listForUser("user-1")).thenReturn(Arrays.asList(alert));
 
         mockMvc.perform(get("/api/alerts")

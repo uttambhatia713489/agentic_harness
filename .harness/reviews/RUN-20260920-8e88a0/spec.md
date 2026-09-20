@@ -13,29 +13,16 @@ Application:       storeops
 Technology:        java-spring
 Governance Policy: default-governance
 Author Agent:      Planner
-Status:            APPROVED — SPRINT-1 approved 2026-09-20 (PASS, archived);
-                    SPRINT-2 approved 2026-09-21 (PASS, archived); SPRINT-3
-                    approved 2026-09-21 (in progress).
+Status:            PARTIALLY APPROVED — SPRINT-1 approved 2026-09-20;
+                    SPRINT-2 and SPRINT-3 remain AWAITING_APPROVAL.
 Baseline:          v2.0
 ```
 
 **Approval Record (SPRINT-1):** Approved by uttambhatia@outlook.com (session
 user) on 2026-09-20 via approval command `APPROVED`, scoped explicitly to
-Sprint 1 only (`sprint-SPRINT-1-contract.md`). Concluded with Evaluator
-VERDICT: PASS (iteration 1) and archived to
-`.harness/reviews/RUN-20260920-8e88a0/sprint-SPRINT-1/`.
-
-**Approval Record (SPRINT-2):** Approved by uttambhatia@outlook.com (session
-user) on 2026-09-21 via approval command `APPROVED`, scoped explicitly to
-Sprint 2 only (`sprint-SPRINT-2-contract.md`). Concluded with Evaluator
-VERDICT: PASS (iteration 1) and archived to
-`.harness/reviews/RUN-20260920-8e88a0/sprint-SPRINT-2/`.
-
-**Approval Record (SPRINT-3):** Approved by uttambhatia@outlook.com (session
-user) on 2026-09-21 via approval command `APPROVED`, scoped explicitly to
-Sprint 3 only (`sprint-SPRINT-3-contract.md`), the final Planner-derived
-sprint in this decomposition. No material change has been made to this
-specification as part of this approval.
+Sprint 1 only (`sprint-SPRINT-1-contract.md`). This specification (`spec.md`)
+itself, and Sprint 2/Sprint 3 contracts, are frozen as planned but not yet
+approved; no material change has been made to them as part of this approval.
 
 ---
 

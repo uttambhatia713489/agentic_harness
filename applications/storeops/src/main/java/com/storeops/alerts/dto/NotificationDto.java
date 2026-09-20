@@ -10,6 +10,7 @@ public record NotificationDto(
         AlertType type,
         NotificationChannel channel,
         NotificationStatus status,
-        String message
+        String message,
+        String referenceId
 ) {
 }
