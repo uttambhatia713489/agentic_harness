@@ -1,0 +1,1718 @@
+# IMPLEMENTATION_PLAN.md
+
+# Configuration-Driven Governed Agentic Delivery Harness — Implementation Plan
+
+**Platform:** Claude Code Enterprise  
+**Architecture:** Configuration-Driven Multi-Agent Harness  
+**Reference Application:** StoreOps  
+**Reference Technology:** Java 21 + Spring Boot 3.x  
+**Demonstration Feature:** SLA Breach Alerting  
+**Version:** 2.0  
+
+---
+
+## 1. Objective
+
+Implement a reusable Claude Code Enterprise harness that converts feature intent into governed software changes through:
+
+```text
+Feature Prompt
+      ↓
+Configuration Resolution
+      ↓
+Planner
+      ↓
+Human Approval
+      ↓
+Generator
+      ↓
+Evaluator
+      ├── PASS / CONDITIONAL_PASS → Monitor
+      └── FAIL → Generator Retry
+                     ↓
+               Maximum Iterations
+                     ↓
+                 Escalation
+```
+
+The implementation must keep the following concerns separate:
+
+```text
+Orchestration
+Configuration
+Agent Responsibilities
+Core Skills
+Technology Skills
+Domain Skills
+Governance Policy
+Executable Checks
+Execution Evidence
+```
+
+StoreOps and SLA Breach Alerting are the reference workload used to validate the reusable harness.
+
+---
+
+# 2. Target Repository Structure
+
+```text
+storeops-agentic-harness/
+│
+├── CLAUDE.md
+├── DESIGN_BRIEF.md
+├── IMPLEMENTATION_PLAN.md
+├── PROMPT.md
+├── DEPLOYMENT.md
+├── REFLECTION.md
+├── README.md
+│
+├── .harness/
+│   │
+│   ├── config/
+│   │   ├── harness.yaml
+│   │   ├── applications/
+│   │   │   └── storeops.yaml
+│   │   ├── technologies/
+│   │   │   └── java-spring.yaml
+│   │   └── policies/
+│   │       └── default-governance.yaml
+│   │
+│   ├── agents/
+│   │   ├── planner.agent.md
+│   │   ├── generator.agent.md
+│   │   ├── evaluator.agent.md
+│   │   └── monitor.agent.md
+│   │
+│   ├── skills/
+│   │   ├── core/
+│   │   │   ├── architecture-principles/
+│   │   │   │   └── SKILL.md
+│   │   │   ├── sprint-decomposition/
+│   │   │   │   └── SKILL.md
+│   │   │   ├── review-guidelines/
+│   │   │   │   └── SKILL.md
+│   │   │   ├── evaluation-framework/
+│   │   │   │   └── SKILL.md
+│   │   │   └── observability/
+│   │   │       └── SKILL.md
+│   │   │
+│   │   ├── technology/
+│   │   │   └── java-spring/
+│   │   │       ├── coding-conventions/
+│   │   │       │   └── SKILL.md
+│   │   │       ├── api-design/
+│   │   │       │   └── SKILL.md
+│   │   │       └── testing-strategy/
+│   │   │           └── SKILL.md
+│   │   │
+│   │   └── domains/
+│   │       └── storeops/
+│   │           ├── app-context/
+│   │           │   └── SKILL.md
+│   │           ├── domain-rules/
+│   │           │   └── SKILL.md
+│   │           ├── architecture-rules/
+│   │           │   └── SKILL.md
+│   │           └── business-events/
+│   │               └── SKILL.md
+│   │
+│   ├── templates/
+│   │   ├── spec.template.md
+│   │   ├── sprint-contract.template.md
+│   │   ├── generator-summary.template.md
+│   │   ├── evaluator-feedback.template.md
+│   │   ├── run-log.template.md
+│   │   └── escalation.template.md
+│   │
+│   ├── checks/
+│   │   ├── architecture/
+│   │   ├── quality/
+│   │   ├── coverage/
+│   │   └── security/
+│   │
+│   ├── output/
+│   └── reviews/
+│
+└── application/
+    └── storeops/
+        ├── pom.xml
+        ├── src/
+        └── README.md
+```
+
+---
+
+# 3. Implementation Principles
+
+The implementation must follow these principles:
+
+1. Keep agents application-agnostic.
+2. Resolve application, technology, and governance behavior from configuration.
+3. Keep business intent separate from engineering policy.
+4. Load only the context required by each agent.
+5. Use durable files for agent handoffs.
+6. Prefer deterministic checks over LLM judgment.
+7. Require human approval before implementation.
+8. Preserve every Generator/Evaluator iteration.
+9. Fail closed when mandatory evidence is ambiguous.
+10. Limit autonomous remediation.
+11. Keep StoreOps-specific knowledge in the four authoritative StoreOps skills: `domains/storeops/app-context`, `domains/storeops/domain-rules`, `domains/storeops/architecture-rules`, and `domains/storeops/business-events`.
+12. Keep Java/Spring-specific knowledge in the Java/Spring technology skills.
+
+---
+
+# 4. Phase 1 — Establish Repository Baseline
+
+## Objective
+
+Create a stable baseline before harness execution begins.
+
+## Tasks
+
+1. Create the target repository structure.
+2. Add the current harness artifacts.
+3. Add or reference the StoreOps application.
+4. Verify the StoreOps application builds before AI-generated changes.
+5. Record the baseline source revision.
+6. Commit the baseline to version control.
+
+## Verification
+
+For the configured StoreOps technology profile, execute the repository's existing verification command.
+
+Expected reference command:
+
+```bash
+mvn clean verify
+```
+
+Use the actual configured command if different.
+
+## Completion Criteria
+
+- repository structure exists;
+- StoreOps source is available;
+- baseline build is known;
+- baseline tests are known;
+- baseline commit exists; and
+- no SLA Breach Alerting implementation has yet been generated by the harness.
+
+---
+
+# 5. Phase 2 — Implement Harness Configuration
+
+## Objective
+
+Externalize runtime selection and governance values from reusable agents.
+
+Create:
+
+```text
+.harness/config/
+```
+
+---
+
+## 5.1 Primary Harness Configuration
+
+Create:
+
+```text
+.harness/config/harness.yaml
+```
+
+It must select:
+
+```text
+Application
+Technology
+Governance Policy
+Feature Prompt
+Entry Agent
+Approval Policy
+Output Directory
+Review Directory
+Audit Behavior
+Observability
+```
+
+Iteration policy (maximum Generator/Evaluator iterations, retry, and escalation) is not owned by `harness.yaml`; it is owned by the active governance policy.
+
+Reference configuration:
+
+```yaml
+version: "1.0"
+
+harness:
+  name: governed-agentic-delivery-harness
+  application: storeops
+  technology: java-spring
+  governancePolicy: default-governance
+  featurePrompt: PROMPT.md
+  outputDirectory: .harness/output
+  reviewDirectory: .harness/reviews
+
+orchestration:
+  entryAgent: planner
+
+approval:
+  planner:
+    required: true
+    approvalCommand: APPROVED
+
+audit:
+  enabled: true
+  preserveIterations: true
+  immutableReviews: true
+
+observability:
+  enabled: true
+```
+
+---
+
+## 5.2 Application Configuration
+
+Create:
+
+```text
+.harness/config/applications/storeops.yaml
+```
+
+Keep the application profile compact. It must describe application-level structural selection only, not detailed StoreOps rules.
+
+Include:
+
+```text
+Application Identity
+Application Type
+Source Root
+Module Inventory
+Authoritative StoreOps Skill References:
+  - domains/storeops/app-context
+  - domains/storeops/domain-rules
+  - domains/storeops/architecture-rules
+  - domains/storeops/business-events
+```
+
+Detailed StoreOps layer model, module interaction rules, error contract, Reports behavior, event mechanism, and role semantics belong in the four authoritative StoreOps skills. They must not be duplicated in `storeops.yaml`.
+
+---
+
+## 5.3 Technology Configuration
+
+Create:
+
+```text
+.harness/config/technologies/java-spring.yaml
+```
+
+Include:
+
+```text
+Language
+Framework
+Build Tool
+Verification Command
+Package Command
+Testing Frameworks
+Coverage Tool
+Static Analysis Tools
+Architecture-Test Tool
+API Style
+```
+
+---
+
+## 5.4 Governance Policy
+
+Create:
+
+```text
+.harness/config/policies/default-governance.yaml
+```
+
+Include:
+
+```text
+Fail-Closed Policy
+Evaluation Dimensions
+Evaluation Weights
+PASS Threshold
+CONDITIONAL_PASS Threshold
+Hard Gates
+Coverage Thresholds
+Maximum Iterations
+Retry Behavior
+Escalation Behavior
+```
+
+Maximum Generator/Evaluator iterations, retry behavior, and escalation behavior are owned exclusively by this governance policy and must not be duplicated in `harness.yaml`.
+
+## Completion Criteria
+
+Configuration can resolve:
+
+```text
+storeops
+java-spring
+default-governance
+PROMPT.md
+```
+
+without requiring StoreOps or Java values to be hard-coded in reusable agents.
+
+---
+
+# 6. Phase 3 — Refactor Skill Packs
+
+## Objective
+
+Separate reusable, technology-specific, and domain-specific knowledge.
+
+---
+
+## 6.1 Core Skills
+
+Move/refactor reusable skills under:
+
+```text
+.harness/skills/core/
+```
+
+Required:
+
+```text
+architecture-principles
+sprint-decomposition
+review-guidelines
+evaluation-framework
+observability
+```
+
+Core skills must not contain StoreOps-specific terminology or Java-specific implementation rules.
+
+---
+
+## 6.2 Java/Spring Technology Skills
+
+Move:
+
+```text
+coding-conventions
+api-design
+testing-strategy
+```
+
+under:
+
+```text
+.harness/skills/technology/java-spring/
+```
+
+These skills may contain:
+
+```text
+Java 21
+Spring Boot
+JUnit 5
+MockMvc
+Maven
+JaCoCo
+Checkstyle
+SpotBugs
+```
+
+but should read configurable thresholds and commands from the active technology/governance configuration.
+
+---
+
+## 6.3 StoreOps Domain Skills
+
+Use the four authoritative StoreOps skills:
+
+```text
+.harness/skills/domains/storeops/
+├── app-context/
+├── domain-rules/
+├── architecture-rules/
+└── business-events/
+```
+
+There is no separate aggregate StoreOps skill. These four skills are the authoritative source of StoreOps application, domain, architecture, and business-event knowledge.
+
+### `app-context`
+
+Describe:
+
+```text
+Activities
+Programmes
+Staff
+Alerts
+Reports
+```
+
+and their responsibilities.
+
+### `domain-rules`
+
+Describe StoreOps business concepts and rules.
+
+### `architecture-rules`
+
+Describe StoreOps-specific constraints such as:
+
+```text
+Controller → Service → Repository
+No Cross-Module Repository Access
+Cross-Module Reads → Service Interface
+Cross-Module Side Effects → Event Bus
+Reports → Read Only
+AppError
+```
+
+### `business-events`
+
+Describe existing and supported StoreOps event semantics. Feature-specific events such as `SLA_BREACH` are illustrative and are approved through the sprint contract based on Planner discovery; they are not mandated by this skill.
+
+## Completion Criteria
+
+A reusable agent can operate without containing direct StoreOps or Java/Spring instructions.
+
+---
+
+# 7. Phase 4 — Refactor Agent Definitions
+
+## Objective
+
+Make all four agents configuration-driven and responsibility-focused.
+
+---
+
+## 7.1 Planner Agent
+
+Update:
+
+```text
+.harness/agents/planner.agent.md
+```
+
+Planner must dynamically load:
+
+```text
+Feature Prompt
+Application Configuration
+Core Architecture Principles
+Sprint Decomposition
+Active Domain Context
+Domain Rules
+Domain Architecture Rules
+Business Events
+```
+
+Planner must:
+
+- inspect the existing application;
+- identify assumptions/open questions;
+- create `spec.md`;
+- create independently verifiable sprint contracts;
+- use unique acceptance-criterion IDs;
+- stop before implementation.
+
+Completion marker:
+
+```text
+STATUS: AWAITING_APPROVAL
+```
+
+---
+
+## 7.2 Generator Agent
+
+Update:
+
+```text
+.harness/agents/generator.agent.md
+```
+
+Generator must dynamically load:
+
+```text
+Approved Sprint Contract
+Resolved Configuration
+Core Architecture Principles
+Active Domain Skills
+Active Technology Skills
+```
+
+Generator must:
+
+- implement only approved scope;
+- follow existing application patterns;
+- generate/update tests;
+- execute configured verification commands;
+- self-assess acceptance criteria;
+- create `generator-summary-iteration-N.md` for the current iteration.
+
+Completion marker:
+
+```text
+STATUS: READY_FOR_EVALUATION
+```
+
+---
+
+## 7.3 Evaluator Agent
+
+Update:
+
+```text
+.harness/agents/evaluator.agent.md
+```
+
+Evaluator must dynamically resolve:
+
+```text
+Verification Commands
+Coverage Thresholds
+Hard Gates
+Architecture Rules
+Evaluation Weights
+Verdict Thresholds
+Fail-Closed Policy
+```
+
+Evaluator must not hard-code StoreOps or Java/Spring values.
+
+Evaluator must execute deterministic checks before semantic review.
+
+Supported verdicts:
+
+```text
+PASS
+CONDITIONAL_PASS
+FAIL
+```
+
+---
+
+## 7.4 Monitor Agent
+
+Update:
+
+```text
+.harness/agents/monitor.agent.md
+```
+
+Monitor must read configured observability requirements and record:
+
+```text
+Run ID
+Sprint ID
+Contract ID
+Iteration Count
+Verdict
+Violations
+Coverage
+Escalation Status
+Token Usage if Available
+Estimated Cost if Available
+Timestamp
+```
+
+Monitor must not modify application code.
+
+## Completion Criteria
+
+All four agents operate using resolved configuration and selected skills rather than embedded application/technology assumptions.
+
+---
+
+# 8. Phase 5 — Implement Harness Bootstrap
+
+## Objective
+
+Ensure every run starts from a validated, reproducible configuration.
+
+## Bootstrap Sequence
+
+```text
+Read harness.yaml
+      ↓
+Resolve Application Profile
+      ↓
+Resolve Technology Profile
+      ↓
+Resolve Governance Policy
+      ↓
+Resolve Skill Packs
+      ↓
+Validate Configuration
+      ↓
+Generate RUN_ID
+      ↓
+Create resolved-config.yaml
+      ↓
+Invoke Planner
+```
+
+---
+
+## 8.1 Configuration Validation
+
+Validate:
+
+- application profile exists;
+- technology profile exists;
+- governance policy exists;
+- feature prompt exists;
+- required agents exist;
+- required skills exist;
+- verification commands exist;
+- evaluation weights total 100;
+- maximum iterations are valid;
+- output/review directories are available.
+
+On failure:
+
+```text
+STATUS: CONFIGURATION_ERROR
+```
+
+Stop execution.
+
+---
+
+## 8.2 Configuration Snapshot
+
+Create:
+
+```text
+.harness/output/<run-id>/resolved-config.yaml
+```
+
+Capture effective:
+
+```text
+Application
+Technology
+Governance Policy
+Verification Commands
+Coverage Thresholds
+Hard Gates
+Maximum Iterations
+Selected Skills
+Output Paths
+```
+
+Do not include secrets.
+
+## Completion Criteria
+
+Every run can be reproduced from its resolved configuration snapshot.
+
+---
+
+# 9. Phase 6 — Implement Artifact Templates
+
+## Objective
+
+Standardize agent handoffs and governance evidence.
+
+Create:
+
+```text
+.harness/templates/
+```
+
+Required templates:
+
+```text
+spec.template.md
+sprint-contract.template.md
+generator-summary.template.md
+evaluator-feedback.template.md
+run-log.template.md
+escalation.template.md
+```
+
+Generic template filenames are used only for templates. Runtime evidence uses iteration-specific names such as `generator-summary-iteration-N.md` and `evaluator-feedback-iteration-N.md`.
+
+---
+
+## 9.1 Specification Template
+
+Required sections:
+
+```text
+Feature
+Business Objective
+Scope
+Out of Scope
+Impacted Components
+Assumptions
+Open Questions
+Architecture Constraints
+Sprint Decomposition
+Dependencies
+Risks
+```
+
+---
+
+## 9.2 Sprint Contract Template
+
+Required sections:
+
+```text
+Run ID
+Sprint ID
+Contract ID
+Objective
+Scope
+Out of Scope
+Dependencies
+Assumptions
+Applicable Architecture Rules
+Acceptance Criteria
+Required Tests
+Hard Gates
+Completion Conditions
+```
+
+---
+
+## 9.3 Generator Summary Template
+
+Required sections:
+
+```text
+Run ID
+Sprint ID
+Contract ID
+Iteration
+Acceptance Criteria Self-Assessment
+Files Added
+Files Modified
+Tests Added/Modified
+Commands Executed
+Build Result
+Test Result
+Coverage Result
+Static Analysis Result
+Known Limitations
+Risks
+Assumptions Used
+```
+
+---
+
+## 9.4 Evaluator Feedback Template
+
+Required sections:
+
+```text
+Run ID
+Sprint ID
+Contract ID
+Iteration
+Hard Gate Results
+Acceptance Criteria Results
+Findings
+Evaluation Scores
+Verdict
+Required Remediation
+```
+
+Every failed finding must contain:
+
+```text
+RULE
+CHECK
+FILE
+LINE
+OBSERVED
+EXPECTED
+REMEDIATION
+```
+
+---
+
+## 9.5 Run Log Template
+
+Required sections:
+
+```text
+Run ID
+Sprint ID
+Contract ID
+Final Verdict
+Iterations Used
+Escalation Status
+Architecture Violations
+Quality Violations
+Coverage Result
+Token Usage if Available
+Estimated Cost if Available
+Timestamp
+```
+
+---
+
+## 9.6 Escalation Template
+
+Required sections:
+
+```text
+Run ID
+Sprint ID
+Contract ID
+Iterations Used
+Failed Hard Gates
+Failed Acceptance Criteria
+Files and Lines
+Attempted Remediations
+Residual Risk
+Open Questions
+Decision Required
+```
+
+## Completion Criteria
+
+Agent outputs follow stable, auditable structures across runs.
+
+---
+
+# 10. Phase 7 — Implement Deterministic Checks
+
+## Objective
+
+Convert architecture and quality expectations into executable evidence wherever practical.
+
+Maintain the following extension-point directories:
+
+```text
+.harness/checks/
+├── architecture/
+├── quality/
+├── coverage/
+└── security/
+```
+
+These directories currently exist as empty extension points. No executable adapters currently exist under `.harness/checks/*`. Configured deterministic checks may execute as direct technology-profile commands/tools or as future adapters added under these subdirectories.
+
+---
+
+## 10.1 Build and Test Checks
+
+Use the active technology profile to execute the configured verification command.
+
+For the StoreOps reference profile:
+
+```bash
+mvn clean verify
+```
+
+---
+
+## 10.2 Coverage Checks
+
+Use the configured coverage tool and thresholds.
+
+For the StoreOps reference profile:
+
+```text
+JaCoCo
+```
+
+coverage thresholds resolved from
+the active governance policy
+
+---
+
+## 10.3 Static Analysis
+
+For the StoreOps reference profile, integrate:
+
+```text
+Checkstyle
+SpotBugs
+```
+
+into the normal verification lifecycle where practical.
+
+---
+
+## 10.4 Architecture Checks
+
+Prefer executable architecture tests for rules that can be deterministically verified.
+
+For StoreOps, verify where practical:
+
+```text
+Controller → Service → Repository
+
+No Cross-Module Repository Access
+
+No Prohibited Dependency Direction
+
+Reports Remain Read Only
+```
+
+Use the technology profile's configured architecture-test mechanism.
+
+For Java/Spring, the preferred reference tool may be:
+
+```text
+ArchUnit
+```
+
+if compatible with the existing application.
+
+---
+
+## 10.5 Event-Bus Compliance
+
+Where the approved sprint contract selects an event-based mechanism for a feature, add deterministic checks for prohibited direct cross-module side-effect dependencies where practical. The event-based mechanism itself is illustrative and Planner-discovered; it is not mandated by this file.
+
+Semantic evaluation may supplement these checks where static verification is insufficient.
+
+---
+
+## 10.6 Security Checks
+
+Use existing repository/enterprise security tooling where available.
+
+Do not introduce unnecessary security tooling solely for the demonstration if equivalent controls already exist.
+
+## Completion Criteria
+
+Evaluator can consume deterministic evidence rather than relying solely on LLM judgment.
+
+---
+
+# 11. Phase 8 — Implement Orchestration
+
+## Objective
+
+Implement the end-to-end workflow defined by `CLAUDE.md`.
+
+Required state flow:
+
+```text
+INITIALIZING
+      ↓
+PLANNING
+      ↓
+AWAITING_APPROVAL
+      ↓
+APPROVED
+      ↓
+GENERATING
+      ↓
+READY_FOR_EVALUATION
+      ↓
+EVALUATING
+      ├── PASS → Monitor
+      ├── CONDITIONAL_PASS → Monitor
+      └── FAIL → RETRY_REQUIRED
+                     ↓
+                  Generator
+```
+
+Maximum retry behavior is resolved from the active governance policy.
+
+---
+
+## 11.1 Human Approval Gate
+
+Planner must stop after producing:
+
+```text
+spec.md
+sprint-N-contract.md
+```
+
+and emit:
+
+```text
+STATUS: AWAITING_APPROVAL
+```
+
+No implementation begins until the configured approval command is received.
+
+Default:
+
+```text
+APPROVED
+```
+
+---
+
+## 11.2 Retry Loop
+
+On:
+
+```text
+VERDICT: FAIL
+```
+
+and while another iteration remains:
+
+```text
+evaluator-feedback-iteration-(N-1).md
+      ↓
+Generator
+      ↓
+Corrected Implementation
+      ↓
+Evaluator
+```
+
+Preserve every iteration.
+
+---
+
+## 11.3 Escalation
+
+When the configured maximum iteration count is exhausted:
+
+```text
+STATUS: ESCALATED
+```
+
+Create:
+
+```text
+escalation.md
+```
+
+and stop autonomous execution.
+
+## Completion Criteria
+
+The harness can route Planner → Approval → Generator → Evaluator → Monitor with bounded remediation and escalation.
+
+---
+
+# 12. Phase 9 — Validate Context Isolation
+
+## Objective
+
+Ensure agents receive only relevant context.
+
+Verify:
+
+### Planner does not unnecessarily receive
+
+```text
+Generator history
+Evaluator implementation details
+Deployment evidence
+REFLECTION.md
+Unrelated technology packs
+```
+
+### Generator does not unnecessarily receive
+
+```text
+Unrelated domain packs
+Unrelated technology packs
+Previous unrelated run history
+```
+
+### Evaluator receives
+
+```text
+Contract
+Changed Files
+Tests
+Generator Evidence
+Applicable Rules
+Applicable Policy
+```
+
+### Monitor receives
+
+```text
+Execution Evidence
+Observability Configuration
+```
+
+rather than the complete source tree where unnecessary.
+
+## Completion Criteria
+
+Context loading is role-specific and configuration-driven.
+
+---
+
+# 13. Phase 10 — Execute StoreOps Demonstration Prompt
+
+## Objective
+
+Use the completed reusable harness to process:
+
+```text
+PROMPT.md
+```
+
+for:
+
+```text
+StoreOps SLA Breach Alerting
+```
+
+The prompt is business-intent focused.
+
+Engineering constraints must be resolved from:
+
+```text
+CLAUDE.md
+.harness/config/
+.harness/skills/
+```
+
+---
+
+## 13.1 Planner Run
+
+Planner should inspect the active StoreOps context and discover unresolved details including:
+
+```text
+Breach Detection Trigger
+Grace-Period Configuration
+Meaning of Unresolved
+Department Lead Resolution
+Store Manager Resolution
+Duplicate/Idempotency Behavior
+Time-Handling Convention
+Resolution/Escalation State Tracking
+Implementation Mechanism (event-based, direct, or other approved integration)
+```
+
+The implementation mechanism for SLA Breach Alerting is Planner-discovered from the active StoreOps context and approved through the sprint contract. Feature-specific events such as `SLA_BREACH` and use of the StoreOps event bus are illustrative and are not mandated by this file.
+
+Planner creates:
+
+```text
+spec.md
+sprint-N-contract.md
+```
+
+and stops:
+
+```text
+STATUS: AWAITING_APPROVAL
+```
+
+---
+
+## 13.2 Human Review
+
+Review:
+
+```text
+Business Interpretation
+Assumptions
+Open Questions
+Sprint Boundaries
+Acceptance Criteria
+Architecture Constraints
+Negative Paths
+Approved Implementation Mechanism
+```
+
+If acceptable:
+
+```text
+APPROVED
+```
+
+---
+
+# 14. Phase 11 — Execute Generator/Evaluator Cycle
+
+## Objective
+
+Demonstrate governed autonomous implementation.
+
+For each approved sprint:
+
+```text
+Generator
+    ↓
+Code + Tests
+    ↓
+generator-summary-iteration-N.md
+    ↓
+Evaluator
+    ↓
+Deterministic Checks
+    ↓
+Semantic Review
+    ↓
+Verdict
+    ↓
+evaluator-feedback-iteration-N.md
+```
+
+---
+
+## 14.1 Desired Demonstration Evidence
+
+A strong demonstration should show that the harness can detect and remediate a meaningful defect if one naturally occurs.
+
+Example architecture violation (illustrative only; assumes an approved event-based mechanism):
+
+```text
+Activities
+    ↓
+Direct Alerts Invocation
+```
+
+Expected Evaluator behavior:
+
+```text
+VERDICT: FAIL
+```
+
+with:
+
+```text
+Rule
+File
+Line
+Observed
+Expected
+Remediation
+```
+
+Generator then corrects the implementation and resubmits.
+
+Do not intentionally introduce unsafe or misleading production defects merely to manufacture evidence.
+
+---
+
+# 15. Phase 12 — Archive Governance Evidence
+
+## Objective
+
+Create a complete audit trail.
+
+Expected structure:
+
+```text
+.harness/reviews/<run-id>/
+├── resolved-config.yaml
+│
+├── sprint-1/
+│   ├── sprint-1-contract.md
+│   ├── generator-summary-iteration-1.md
+│   ├── evaluator-feedback-iteration-1.md
+│   ├── generator-summary-iteration-2.md
+│   ├── evaluator-feedback-iteration-2.md
+│   └── run-log.md
+│
+└── sprint-N/
+    └── ...
+```
+
+Do not overwrite previous iterations.
+
+## Completion Criteria
+
+The complete path from requirement to final verdict is auditable.
+
+---
+
+# 16. Phase 13 — Deploy and Demonstrate StoreOps
+
+## Objective
+
+Prove that the harness produces working software rather than only code or documentation.
+
+Use:
+
+```text
+DEPLOYMENT.md
+```
+
+as the deployment and evidence guide.
+
+Demonstrate at minimum:
+
+| Scenario | Expected Outcome |
+|---|---|
+| Overdue `HIGH` activity | SLA breach |
+| Overdue `CRITICAL` activity | SLA breach |
+| Department Lead notification | Notification created |
+| Unresolved breach after grace period | Store Manager escalation |
+| Resolved before grace period | No escalation |
+| `LOW` activity | No breach |
+| `MEDIUM` activity | No breach |
+| `DONE` activity | No breach |
+| Non-overdue activity | No breach |
+
+Populate `DEPLOYMENT.md` only with actual observed evidence.
+
+---
+
+# 17. Phase 14 — Complete Reflection
+
+## Objective
+
+Evaluate the harness using actual run evidence.
+
+Complete:
+
+```text
+REFLECTION.md
+```
+
+only after the demonstration.
+
+Use evidence from:
+
+```text
+generator-summary-iteration-N.md
+evaluator-feedback-iteration-N.md
+run-log.md
+DEPLOYMENT.md
+```
+
+Reflection should identify:
+
+1. what worked well;
+2. what did not work as expected;
+3. where human intervention was required;
+4. whether context isolation was effective;
+5. whether deterministic checks reduced evaluator ambiguity;
+6. whether retry/remediation was effective;
+7. one concrete architectural improvement; and
+8. which decision in `DESIGN_BRIEF.md` the improvement affects.
+
+Do not fabricate observations.
+
+---
+
+# 18. Phase 15 — CI/CD Integration
+
+## Objective
+
+Ensure harness governance complements normal engineering controls.
+
+Target flow:
+
+```text
+Feature Prompt
+      ↓
+Harness
+      ↓
+PASS
+      ↓
+Git Commit / Pull Request
+      ↓
+CI Pipeline
+      ├── Build
+      ├── Tests
+      ├── Coverage
+      ├── Static Analysis
+      ├── Architecture Checks
+      └── Security Checks
+      ↓
+Deployment
+```
+
+CI must independently re-run deterministic checks against the committed revision.
+
+Harness evidence must not replace CI/CD enforcement.
+
+---
+
+# 19. Phase 16 — Validate Reusability
+
+## Objective
+
+Demonstrate that StoreOps-specific behavior is not embedded in reusable components.
+
+Review:
+
+```text
+CLAUDE.md
+planner.agent.md
+generator.agent.md
+evaluator.agent.md
+monitor.agent.md
+skills/core/
+```
+
+Confirm they do not unnecessarily hard-code:
+
+```text
+StoreOps
+Activities
+Alerts
+Department Lead
+STORE_MANAGER
+Java 21
+Spring Boot
+Maven
+80% Coverage
+```
+
+These values should resolve from:
+
+```text
+Application Configuration
+Technology Configuration
+Governance Policy
+Domain Skills
+Technology Skills
+```
+
+---
+
+## Reusability Test
+
+Conceptually verify that:
+
+```yaml
+application: storeops
+technology: java-spring
+governancePolicy: default-governance
+```
+
+could be replaced by another valid profile without redesigning the four-agent workflow.
+
+The objective is not to implement another application for the capstone unless required.
+
+The objective is to prove that the architecture supports it.
+
+---
+
+# 20. Implementation Sequence
+
+Recommended execution order:
+
+```text
+01. Freeze current design artifacts
+        ↓
+02. Establish Git baseline
+        ↓
+03. Add/verify StoreOps application
+        ↓
+04. Implement harness configuration
+        ↓
+05. Refactor core skills
+        ↓
+06. Refactor Java/Spring technology skills
+        ↓
+07. Refactor StoreOps domain skills
+        ↓
+08. Refactor four agent definitions
+        ↓
+09. Implement configuration bootstrap
+        ↓
+10. Implement artifact templates
+        ↓
+11. Implement deterministic checks
+        ↓
+12. Validate StoreOps baseline quality gates
+        ↓
+13. Validate context isolation
+        ↓
+14. Execute PROMPT.md through Planner
+        ↓
+15. Review spec/contracts
+        ↓
+16. APPROVED
+        ↓
+17. Execute Generator/Evaluator loop
+        ↓
+18. Monitor and archive evidence
+        ↓
+19. Deploy StoreOps
+        ↓
+20. Execute SLA demonstration scenarios
+        ↓
+21. Complete DEPLOYMENT.md
+        ↓
+22. Complete REFLECTION.md
+        ↓
+23. Validate CI/CD integration
+        ↓
+24. Perform final traceability/reusability review
+```
+
+---
+
+# 21. Implementation Deliverables
+
+| Area | Deliverable |
+|---|---|
+| Orchestration | `CLAUDE.md` |
+| Runtime Configuration | `.harness/config/harness.yaml` |
+| Application Profile | `.harness/config/applications/storeops.yaml` |
+| Technology Profile | `.harness/config/technologies/java-spring.yaml` |
+| Governance Policy | `.harness/config/policies/default-governance.yaml` |
+| Planner | `.harness/agents/planner.agent.md` |
+| Generator | `.harness/agents/generator.agent.md` |
+| Evaluator | `.harness/agents/evaluator.agent.md` |
+| Monitor | `.harness/agents/monitor.agent.md` |
+| Core Skills | `.harness/skills/core/` |
+| Technology Skills | `.harness/skills/technology/java-spring/` |
+| StoreOps Skills | `.harness/skills/domains/storeops/` (four authoritative skills) |
+| Templates | `.harness/templates/` |
+| Executable Checks | `.harness/checks/` (extension points; no executable adapters currently exist under `.harness/checks/*`) |
+| Feature Input | `PROMPT.md` |
+| Planner Evidence | `spec.md`, sprint contracts |
+| Generator Evidence | `generator-summary-iteration-N.md` |
+| Evaluator Evidence | `evaluator-feedback-iteration-N.md` |
+| Monitor Evidence | `run-log.md` |
+| Escalation Evidence | `escalation.md` when required |
+| Deployment Evidence | `DEPLOYMENT.md` |
+| Reflection | `REFLECTION.md` |
+
+---
+
+# 22. Definition of Done
+
+## Configuration
+
+- [ ] `harness.yaml` exists and resolves successfully.
+- [ ] StoreOps application profile exists.
+- [ ] Java/Spring technology profile exists.
+- [ ] Governance policy exists.
+- [ ] Resolved configuration snapshot is generated per run.
+- [ ] No secrets are written to resolved configuration.
+- [ ] `maxIterations` and retry/escalation policy are defined only in the governance policy, not in `harness.yaml`.
+
+## Agents
+
+- [ ] Planner is application/technology agnostic.
+- [ ] Generator is application/technology agnostic.
+- [ ] Evaluator reads rules and thresholds from configuration.
+- [ ] Monitor reads observability requirements from configuration.
+- [ ] Agent responsibility boundaries are preserved.
+
+## Skills
+
+- [ ] Core skills contain no unnecessary StoreOps-specific rules.
+- [ ] Java/Spring guidance is isolated under the technology skills.
+- [ ] StoreOps knowledge is isolated under the four StoreOps skills.
+- [ ] Configurable values are not unnecessarily duplicated in skills.
+
+## Governance
+
+- [ ] Human approval occurs before implementation.
+- [ ] Deterministic checks execute before semantic evaluation.
+- [ ] Hard-gate failures cannot be overridden by weighted scoring.
+- [ ] Ambiguous mandatory checks fail closed.
+- [ ] Retry count is configuration-driven and owned by the governance policy.
+- [ ] Autonomous remediation is bounded.
+- [ ] Escalation stops autonomous execution.
+- [ ] Previous iteration evidence is preserved.
+
+## StoreOps Demonstration
+
+- [ ] Planner processes `PROMPT.md`.
+- [ ] `spec.md` is generated.
+- [ ] Sprint contracts are generated.
+- [ ] Contracts contain unique acceptance-criterion IDs.
+- [ ] Generator implements approved contracts.
+- [ ] Evaluator independently verifies implementation.
+- [ ] Monitor records final sprint outcomes.
+- [ ] SLA Breach Alerting is demonstrable.
+- [ ] Negative scenarios are demonstrable.
+
+## Evidence
+
+- [ ] `.harness/output/` contains working run artifacts.
+- [ ] `.harness/reviews/` contains archived governance evidence.
+- [ ] `generator-summary-iteration-N.md` exists for each iteration.
+- [ ] `evaluator-feedback-iteration-N.md` exists for each iteration.
+- [ ] Run logs exist.
+- [ ] Retry evidence exists where applicable.
+- [ ] Escalation evidence exists where applicable.
+- [ ] `DEPLOYMENT.md` contains actual observed results.
+- [ ] `REFLECTION.md` is based on actual run evidence.
+
+## Reusability
+
+- [ ] StoreOps is not embedded in reusable agent definitions.
+- [ ] Java/Spring is not embedded in reusable agent definitions.
+- [ ] Governance thresholds are configuration-driven.
+- [ ] Another application profile can be added without redesigning the agent workflow.
+- [ ] Another technology profile can be added without redesigning the agent workflow.
+- [ ] Another governance policy can be added without redesigning the agent workflow.
+
+---
+
+# 23. Final Target State
+
+The completed implementation should demonstrate:
+
+```text
+                    Reusable Harness
+                          │
+                          v
+                   Configuration
+                          │
+          ┌───────────────┼───────────────┐
+          │               │               │
+          v               v               v
+     Application      Technology      Governance
+       Profile          Profile         Policy
+          │               │               │
+          └───────────────┼───────────────┘
+                          │
+                          v
+                       Planner
+                          │
+                          v
+                   Human Approval
+                          │
+                          v
+                      Generator
+                          │
+                          v
+                      Evaluator
+                     /         \
+                  FAIL         PASS
+                   │             │
+                   v             v
+               Generator      Monitor
+                   │             │
+              Max Retries        v
+                   │        Review Archive
+                   v
+               Escalation
+```
+
+The implementation is complete when the repository proves that the harness can:
+
+```text
+Resolve Configuration
+        +
+Interpret Business Intent
+        +
+Create Explicit Contracts
+        +
+Generate Software
+        +
+Enforce Architecture
+        +
+Verify Quality
+        +
+Remediate Failures
+        +
+Escalate Residual Risk
+        +
+Preserve Audit Evidence
+        +
+Produce Deployable Software
+```
+
+without embedding the StoreOps SLA Breach Alerting use case into the reusable harness itself.

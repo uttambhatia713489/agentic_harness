@@ -1,0 +1,195 @@
+version: "2.0"
+
+harness:
+  name: governed-agentic-delivery-harness
+  baseline: v2.0
+  description: >
+    Top-level selection and orchestration configuration for a
+    Configuration-Driven Governed Agentic Delivery Harness run.
+    Governance-owned values (thresholds, hard gates, scoring,
+    verdict thresholds, fail-closed behavior, maxIterations,
+    retry/escalation policy) remain in the selected governance
+    policy. Application-specific and technology-specific values
+    remain in the selected application and technology profiles.
+  application: storeops
+  technology: java-spring
+  governancePolicy: default-governance
+  featurePrompt: PROMPT.md
+  outputDirectory: .harness/output
+  reviewDirectory: .harness/reviews
+  resolvedConfigArtifact: resolved-config.yaml
+
+orchestration:
+  entryAgent: planner
+  stages:
+    - id: planner
+      description: >
+        Planner discovers, produces spec.md and Planner-derived
+        sprint contracts, and stops for human approval. Sprint
+        decomposition is not fixed by this file.
+      completionMarker: STATUS - AWAITING_APPROVAL
+    - id: human-approval
+      description: >
+        Approval gate. Implementation does not begin until the
+        configured approval mechanism is satisfied.
+    - id: generator-evaluator-loop
+      description: >
+        Bounded Generator/Evaluator loop. Iterations, retries,
+        and escalation are governed by the active governance
+        policy and routed by the harness.
+      routingOwnedBy: governance-policy-and-harness
+    - id: monitor
+      description: >
+        Monitor records governance-observability evidence for
+        each iteration and concluded sprint. Monitor does not
+        determine verdicts, retries, escalation, sprint
+        progression, or run completion.
+      routingOwnedBy: harness
+  progression:
+    sprintProgressionOwnedBy: harness
+    runCompletionOwnedBy: harness
+  verdictAuthority: evaluator
+  verdictRouting: harness
+
+approval:
+  planner:
+    required: true
+    approvalCommand: APPROVED
+    approvalMechanismOwnedBy: harness-baseline
+
+iteration:
+  ownedBy: default-governance
+  reference:
+    source: .harness/config/policies/default-governance.yaml
+  note: >
+    Maximum Generator/Evaluator iterations, retry authorization,
+    and escalation policy are owned by the active governance
+    policy. Do not duplicate them in this file.
+
+verdicts:
+  ownedBy: default-governance
+  reference:
+    source: .harness/config/policies/default-governance.yaml
+  note: >
+    Verdict vocabulary, thresholds, and PASS/CONDITIONAL_PASS/FAIL
+    routing conditions are owned by the active governance policy
+    and CLAUDE.md.
+
+context:
+  isolation: true
+  resetBetweenAgents: true
+  resetBetweenSprints: true
+  loadPolicy:
+    plannerLoadsFeaturePromptAndActiveContext: true
+    generatorLoadsApprovedContractAndActiveSkills: true
+    evaluatorLoadsIndependentEvaluationContext: true
+    monitorLoadsAvailableCanonicalEvidenceAndMetadata: true
+
+agents:
+  planner:
+    enabled: true
+    path: .harness/agents/planner.agent.md
+    role: planning-only
+  generator:
+    enabled: true
+    path: .harness/agents/generator.agent.md
+    role: implementation-only
+  evaluator:
+    enabled: true
+    path: .harness/agents/evaluator.agent.md
+    role: evaluation-only
+  monitor:
+    enabled: true
+    path: .harness/agents/monitor.agent.md
+    role: governance-observability
+
+skills:
+  loadedThroughProfiles: true
+  note: >
+    StoreOps domain skills are resolved through the selected
+    application profile (storeops.yaml). Java/Spring technology
+    skills are resolved through the selected technology profile
+    (java-spring.yaml). Core reusable skills are provided by the
+    harness skill directory. This file must not duplicate skill
+    paths already owned by the profiles or the harness baseline,
+    and must not reference legacy domain-pack-storeops as
+    authoritative.
+  reusableCoreLocation: .harness/skills/core
+
+checks:
+  location: .harness/checks
+  status: extension-point
+  executableAdaptersPresent: false
+  invocation:
+    generatorInvokesConfiguredVerification: true
+    evaluatorIndependentlyRerunsConfiguredChecks: true
+    monitorExecutesChecks: false
+    checksIssueVerdicts: false
+  ownership:
+    ruleDefinitionsOwnedByDomainOrGovernance: true
+    toolSelectionOwnedByTechnologyProfile: true
+    thresholdsOwnedByGovernancePolicy: true
+  note: >
+    The .harness/checks/{architecture,coverage,security,quality}
+    subdirectories exist as extension points. This file does not
+    require executable scripts to exist under those folders.
+
+audit:
+  enabled: true
+  preserveIterations: true
+  immutableReviews: true
+  correctionPolicy: append-correction-entry
+
+observability:
+  enabled: true
+  capture:
+    runId: available
+    sprintId: available
+    contractId: available
+    iteration: available
+    verdict: available
+    findingsSummary: available
+    escalationStatus: available
+    timestamps: available
+    tokenUsage: available-when-provided
+    estimatedCost: available-when-provided
+  telemetryPolicy:
+    fabricateUnavailableTelemetry: false
+    recordUnavailableAs: N/A
+  runLogArtifact: run-log.md
+
+evidence:
+  runtimeArtifactNames:
+    resolvedConfig: resolved-config.yaml
+    specification: spec.md
+    sprintContract: sprint-N-contract.md
+    generatorEvidence: generator-summary-iteration-N.md
+    evaluatorEvidence: evaluator-feedback-iteration-N.md
+    runLog: run-log.md
+    escalation: escalation.md
+  templateFilenamesAreNotRuntime: true
+
+lifecycle:
+  ownedBy: CLAUDE.md
+  cicd:
+    scope: outside-harness-yaml
+    reference: CLAUDE.md
+  deployment:
+    scope: outside-harness-yaml
+    reference: DEPLOYMENT.md
+  rollback:
+    scope: outside-harness-yaml
+    reference: DEPLOYMENT.md
+  reflection:
+    scope: outside-harness-yaml
+    reference: REFLECTION.md
+
+precedence:
+  order:
+    - CLAUDE.md (orchestration/context boundaries)
+    - governance policy (default-governance.yaml)
+    - application profile (storeops.yaml)
+    - technology profile (java-spring.yaml)
+    - harness.yaml (selection and orchestration entry)
+    - approved sprint contract
+    - resolved-config.yaml (immutable run snapshot, non-authoritative)

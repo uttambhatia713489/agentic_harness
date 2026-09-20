@@ -1,0 +1,132 @@
+version: "2.0"
+
+technology:
+  id: java-spring
+  baseline: v2.0
+  description: >
+    Java/Spring technology profile for the Configuration-Driven
+    Governed Agentic Delivery Harness. This profile owns technology
+    stack selection, tools, executable commands, frameworks, API
+    style, and technology defaults. It does not define coverage/
+    security/quality thresholds, hard gates, scoring, verdict
+    thresholds, fail-closed behavior, iteration limits, or
+    application/domain rules. Those remain governance- and
+    application/domain-owned.
+
+language:
+  name: java
+  version: "21"
+
+framework:
+  name: spring-boot
+  version: "3.x"
+
+build:
+  tool: maven
+  verifyCommand: mvn clean verify
+  packageCommand: mvn clean package
+
+testing:
+  frameworks:
+    - name: junit
+      version: "5"
+      role: unit
+    - name: mockmvc
+      role: api-controller
+  behavior:
+    verifyBusinessBehavior: true
+    verifyPositiveAndNegativePaths: true
+    verifyErrorContract: true
+    deterministicTimeHandling: preferred
+  thresholdsOwnedBy: default-governance
+
+coverage:
+  tool: jacoco
+  thresholdsOwnedBy: default-governance
+
+staticAnalysis:
+  tools:
+    - checkstyle
+    - spotbugs
+  thresholdsOwnedBy: default-governance
+
+architectureTests:
+  tool: archunit
+  ruleDefinitionsOwnedBy: domain-architecture-rules
+  thresholdsOwnedBy: default-governance
+
+security:
+  tools: []
+  thresholdsOwnedBy: default-governance
+
+api:
+  style: rest
+  guidanceOwnedBy: technology/java-spring/api-design
+
+conventions:
+  dependencyInjection: constructor
+  applicationConventionsAuthoritative: true
+  guidanceOwnedBy: technology/java-spring/coding-conventions
+
+verificationCategories:
+  build:
+    configured: true
+    command: mvn clean verify
+  tests:
+    configured: true
+    command: mvn clean verify
+  coverage:
+    configured: true
+    tool: jacoco
+  staticAnalysis:
+    configured: true
+    tools:
+      - checkstyle
+      - spotbugs
+  architecture:
+    configured: true
+    tool: archunit
+  security:
+    configured: false
+    tools: []
+
+skills:
+  loadedThroughHarnessContextResolution: true
+  reference:
+    codingConventions: technology/java-spring/coding-conventions
+    apiDesign: technology/java-spring/api-design
+    testingStrategy: technology/java-spring/testing-strategy
+
+execution:
+  generatorInvokesConfiguredVerification: true
+  evaluatorIndependentlyRerunsConfiguredChecks: true
+  issuesVerdicts: false
+
+boundary:
+  ownedByThisProfile:
+    - language and framework selection
+    - build tool and commands
+    - testing frameworks
+    - coverage tool
+    - static-analysis tools
+    - architecture test tool
+    - configured security tools
+    - api style
+    - technology default conventions
+  notOwnedByThisProfile:
+    - coverage thresholds
+    - static-analysis thresholds
+    - security thresholds
+    - hard gates
+    - scoring dimensions and weights
+    - verdict thresholds
+    - fail-closed policy
+    - maxIterations
+    - retry and escalation policy
+    - orchestration statuses
+    - application/domain business rules
+    - application/domain architecture rules
+    - approval command and mechanism
+    - output and review paths
+    - deployment and rollback controls
+    - reflection

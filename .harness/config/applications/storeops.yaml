@@ -1,0 +1,19 @@
+application:
+  id: storeops
+  name: StoreOps
+  type: modular-monolith
+  sourceRoot: application/storeops
+
+domain:
+  skills:
+    appContext: domains/storeops/app-context
+    domainRules: domains/storeops/domain-rules
+    architectureRules: domains/storeops/architecture-rules
+    businessEvents: domains/storeops/business-events
+
+modules:
+  - activities
+  - programmes
+  - staff
+  - alerts
+  - reports

@@ -1,0 +1,158 @@
+version: "2.0"
+
+policy:
+  id: default-governance
+  baseline: v2.0
+  description: >
+    Governance policy for the Configuration-Driven Governed Agentic
+    Delivery Harness. Owns fail-closed behavior, evaluation
+    dimensions and weights, verdict thresholds, hard-gate definitions
+    and enablement, coverage thresholds, iteration limit, retry
+    behavior, and escalation behavior. Values not verified from an
+    authoritative source are recorded as null and must be resolved
+    from the authoritative source before use.
+  authoritative: true
+
+failClosed:
+  enabled: null
+
+evaluation:
+  scoringConfigured: null
+  scoreOnlyWhenMandatoryChecksPermit: true
+  dimensions:
+    - id: architectureAndContractCompliance
+      weight: null
+    - id: functionalCorrectnessAndTesting
+      weight: null
+    - id: maintainabilityAndGovernance
+      weight: null
+  weightsMustTotal: 100
+  invalidConfigurationBehavior: CONFIGURATION_ERROR
+
+verdicts:
+  supported:
+    - PASS
+    - CONDITIONAL_PASS
+    - FAIL
+  thresholds:
+    passThreshold: null
+    conditionalPassThreshold: null
+    scoreBelowConditionalThresholdBehavior: FAIL
+  conditionalPass:
+    requiresHumanIntervention: false
+    routingOwnedBy: harness
+  authorityOwnedBy: evaluator
+  hardGateOverridesScoring: true
+  mandatoryAcceptanceCriterionFailureBehavior: FAIL
+  ambiguousMandatoryUnderFailClosedBehavior: FAIL
+
+hardGates:
+  overrideAllowed: false
+  definitions:
+    - id: build
+      enabled: null
+      mandatory: null
+    - id: tests
+      enabled: null
+      mandatory: null
+    - id: coverage
+      enabled: null
+      mandatory: null
+    - id: staticAnalysis
+      enabled: null
+      mandatory: null
+    - id: architecture
+      enabled: null
+      mandatory: null
+      ruleSource: active-application-domain-architecture-rules
+    - id: security
+      enabled: null
+      mandatory: null
+    - id: acceptanceCriteria
+      enabled: true
+      mandatory: true
+    - id: governanceEvidence
+      enabled: null
+      mandatory: null
+
+coverage:
+  configured: null
+  thresholds:
+    overall: null
+    perLayer: null
+  toolSource: technology-profile
+
+security:
+  configured: null
+  thresholds: null
+  toolSource: technology-profile
+
+staticAnalysis:
+  configured: null
+  thresholds: null
+  toolSource: technology-profile
+
+acceptanceCriteria:
+  mandatoryFailureBehavior: FAIL
+  identifiersOwnedBy: planner-and-approved-sprint-contract
+  verificationOwnedBy: evaluator
+
+iteration:
+  generatorEvaluator:
+    maxIterations: null
+    countingRule: initial-iteration-plus-remediation-iterations
+    onFailure: retry-while-iterations-remain
+    onMaxIterations: escalate
+  ownedByThisPolicy: true
+  routingOwnedBy: harness
+
+escalation:
+  policyOwnedByThisPolicy: true
+  authorizationOwnedBy: harness
+  evidenceArtifact: escalation.md
+
+telemetry:
+  fabricateUnavailableTelemetry: false
+  recordUnavailableAs: N/A
+
+configurationValidation:
+  invalidWeightsBehavior: CONFIGURATION_ERROR
+  invalidThresholdsBehavior: CONFIGURATION_ERROR
+  duplicateOwnershipBehavior: CONFIGURATION_ERROR
+  silentNormalizationAllowed: false
+
+references:
+  evaluatorAgent: .harness/agents/evaluator.agent.md
+  evaluationFrameworkSkill: .harness/skills/core/evaluation-framework
+  reviewGuidelinesSkill: .harness/skills/core/review-guidelines
+  observabilitySkill: .harness/skills/core/observability
+
+boundary:
+  ownedByThisPolicy:
+    - failClosed behavior
+    - evaluation dimensions and weights
+    - verdict thresholds
+    - CONDITIONAL_PASS routing policy
+    - hard-gate definitions and enablement
+    - coverage thresholds
+    - security thresholds
+    - static-analysis thresholds
+    - acceptance-criteria failure semantics
+    - iteration limit and counting rule
+    - retry behavior
+    - escalation behavior
+    - governance configuration validity semantics
+  notOwnedByThisPolicy:
+    - orchestration status vocabulary
+    - approval command and mechanism
+    - output and review paths
+    - application and technology selection
+    - technology tool selection and executable commands
+    - application and domain business rules
+    - application and domain architecture rules
+    - feature-specific business rules
+    - implementation mechanism
+    - runtime artifact filenames
+    - deployment and rollback controls
+    - CI/CD execution
+    - reflection
