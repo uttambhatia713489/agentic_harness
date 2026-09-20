@@ -10,6 +10,7 @@ public class Notification {
     private NotificationChannel channel;
     private NotificationStatus status;
     private String message;
+    private String referenceId;
     private Instant createdAt;
 
     public String getId() {
@@ -58,6 +59,14 @@ public class Notification {
 
     public void setMessage(final String message) {
         this.message = message;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(final String referenceId) {
+        this.referenceId = referenceId;
     }
 
     public Instant getCreatedAt() {

@@ -9,6 +9,8 @@ public interface ProgrammeService {
 
     List<ProgrammeDto> listForStore(String storeId);
 
+    ProgrammeDto getById(String id);
+
     ProgrammeDto create(CreateProgrammeRequest request);
 
     ProgrammeDto addMember(String id, AddMemberRequest request);

@@ -84,6 +84,29 @@ class ProgrammeServiceTest {
     }
 
     @Test
+    void testGetByIdReturnsProgrammeWithMembersWhenExists() {
+        final Project project = new Project();
+        project.setId("prog-1");
+        project.setStoreId("store-1");
+        project.setName("Q4 Planning");
+        when(programmeRepository.findById("prog-1")).thenReturn(Optional.of(project));
+
+        final var result = programmeService.getById("prog-1");
+
+        assertNotNull(result);
+        assertEquals("prog-1", result.id());
+        assertEquals("Q4 Planning", result.name());
+        verify(programmeRepository, never()).save(any());
+    }
+
+    @Test
+    void testGetByIdThrowsNotFoundErrorWhenProgrammeNotExists() {
+        when(programmeRepository.findById("non-existent")).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundError.class, () -> programmeService.getById("non-existent"));
+    }
+
+    @Test
     void testCloseEmitsEvent() {
         final Project project = new Project();
         project.setId("prog-1");

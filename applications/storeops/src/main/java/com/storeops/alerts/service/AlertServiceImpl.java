@@ -29,6 +29,7 @@ public class AlertServiceImpl implements AlertService {
                 notification.getType(),
                 notification.getChannel(),
                 notification.getStatus(),
-                notification.getMessage());
+                notification.getMessage(),
+                notification.getReferenceId());
     }
 }

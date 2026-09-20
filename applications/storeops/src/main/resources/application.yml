@@ -8,3 +8,4 @@ spring:
 storeops:
   sla:
     detection-fixed-rate-ms: 60000
+    grace-period: PT4H
